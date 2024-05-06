@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ClerkProvider } from "@clerk/nextjs";
+import {
+    ClerkProvider,
+    SignInButton,
+    SignedIn,
+    SignedOut,
+    UserButton,
+} from "@clerk/nextjs";
 import { inter } from "@/components/ui/fonts";
 import RootProvider from "@/components/providers/root-provider";
 
