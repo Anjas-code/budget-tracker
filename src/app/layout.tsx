@@ -9,6 +9,7 @@ import {
 } from "@clerk/nextjs";
 import { inter } from "@/components/ui/fonts";
 import RootProvider from "@/components/providers/root-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
     title: "Budget Tracking",
@@ -30,6 +31,7 @@ export default function RootLayout({
                 }}
             >
                 <body className={inter.className}>
+                    <Toaster richColors position="bottom-right" />
                     <RootProvider>{children}</RootProvider>
                 </body>
             </html>

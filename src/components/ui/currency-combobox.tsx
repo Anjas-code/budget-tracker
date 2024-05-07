@@ -20,9 +20,11 @@ import {
 } from "@/components/ui/popover";
 import { CURRENCY } from "@/definitions";
 import { CURRENCIES } from "@/constant";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { SkeletonWrapper } from "./skeleton-wrapper";
 import { UserSettings } from "@prisma/client";
+import { UpdateUserCurrency } from "@/_actions/userSettings";
+import { toast } from "sonner";
 
 export function CurrencyCombobox() {
     const [open, setOpen] = React.useState(false);
@@ -36,15 +38,54 @@ export function CurrencyCombobox() {
         queryFn: () => fetch("/api/user-settings").then((res) => res.json()),
     });
 
+    const mutation = useMutation({
+        mutationFn: UpdateUserCurrency,
+        onSuccess: (data: UserSettings) => {
+            toast.success("Currency updated successfully  🎉", {
+                id: "update-currency",
+            });
+
+            setSelectedOption(
+                CURRENCIES.find(
+                    (currency) => currency.value === data.currency
+                ) || null
+            );
+        },
+        onError: (e) => {
+            console.log(e);
+            toast.error("Something went wrong ⛔️", {
+                id: "update-currency",
+            });
+        },
+    });
+
+    const handleSelectOption = React.useCallback(
+        (currency: CURRENCY | null) => {
+            if (!currency) {
+                toast.error("please select a currency");
+                return;
+            }
+
+            toast.loading("Updating currency...", {
+                id: "update-currency",
+            });
+
+            mutation.mutate(currency.value);
+        },
+        [mutation]
+    );
+
     React.useEffect(() => {
         if (!userSettings.data) return;
 
-        const userCurrency = CURRENCIES.find((currency) => currency.value === userSettings.data.currency)
+        const userCurrency = CURRENCIES.find(
+            (currency) => currency.value === userSettings.data.currency
+        );
 
         if (userCurrency) {
-            setSelectedOption(userCurrency)
+            setSelectedOption(userCurrency);
         }
-    }, [userSettings.data])
+    }, [userSettings.data]);
 
     if (isDesktop) {
         return (
@@ -54,6 +95,7 @@ export function CurrencyCombobox() {
                         <Button
                             variant="outline"
                             className="w-full justify-start"
+                            disabled={mutation.isPending}
                         >
                             {selectedOption ? (
                                 <>{selectedOption.label}</>
@@ -65,7 +107,7 @@ export function CurrencyCombobox() {
                     <PopoverContent className="w-[200px] p-0" align="start">
                         <OptionsList
                             setOpen={setOpen}
-                            setSelectedOption={setSelectedOption}
+                            setSelectedOption={handleSelectOption}
                         />
                     </PopoverContent>
                 </Popover>
@@ -77,7 +119,10 @@ export function CurrencyCombobox() {
         <SkeletonWrapper isLoading={userSettings.isFetching}>
             <Drawer open={open} onOpenChange={setOpen}>
                 <DrawerTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button
+                        variant="outline"
+                        className="w-full justify-start disabled={mutation.isPending}"
+                    >
                         {selectedOption ? (
                             <>{selectedOption.label}</>
                         ) : (
@@ -89,7 +134,7 @@ export function CurrencyCombobox() {
                     <div className="mt-4 border-t">
                         <OptionsList
                             setOpen={setOpen}
-                            setSelectedOption={setSelectedOption}
+                            setSelectedOption={handleSelectOption}
                         />
                     </div>
                 </DrawerContent>
